@@ -1,0 +1,20 @@
+version: "3.3"
+
+services:
+  standupbot:
+    image: ghcr.io/josiahbull/standupbot:main
+    container_name: standupbot
+    restart: always
+    environment:
+      - DISCORD_TOKEN
+      - TZ
+
+  autoheal:
+    restart: unless-stopped
+    image: willfarrell/autoheal
+    environment:
+      - AUTOHEAL_CONTAINER_LABEL=all
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      - standupbot

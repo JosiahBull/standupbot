@@ -1,0 +1,8 @@
+target/
+data/
+.env
+*.jpg
+/old
+config.toml
+
+!profile.jpg
