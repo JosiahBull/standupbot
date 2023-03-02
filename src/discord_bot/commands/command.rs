@@ -1,5 +1,5 @@
 use serenity::{
-    all::{AutocompleteOption, CommandInteraction, ComponentInteraction},
+    all::{AutocompleteOption, CommandInteraction, ComponentInteraction, ModalInteraction},
     async_trait,
     builder::{CreateAutocompleteResponse, CreateCommand},
     model::{application::CommandType, Permissions},
@@ -63,6 +63,23 @@ pub trait InteractionCommand<'a>: Command<'a> {
     /// handle the generated interaction for this command
     async fn interaction<'b>(
         interaction: &'b ComponentInteraction,
+        app_state: &'b AppState,
+        context: &'b Context,
+    ) -> Result<CommandResponse, CommandResponse>;
+}
+
+#[async_trait]
+pub trait ModalSubmit<'a>: Command<'a> + InteractionCommand<'a> {
+    /// check if this modal submission is FOR this command
+    async fn modal_submit<'b>(
+        modal: &'b ModalInteraction,
+        app_state: &'b AppState,
+        context: &'b Context,
+    ) -> bool;
+
+    /// handle the modal submit for this command
+    async fn handle_modal_submit<'b>(
+        modal: &'b ModalInteraction,
         app_state: &'b AppState,
         context: &'b Context,
     ) -> Result<CommandResponse, CommandResponse>;
@@ -154,6 +171,23 @@ macro_rules! interaction {
     };
 }
 
+/// match against a list of provided modal submit command types, and produce a response which can be sent to the user
+macro_rules! modal {
+    ( $cmd:expr, $state:expr, $context:expr, $( $x:ty ),* $(,)? ) => {
+        {
+            /// ensures that the provided type has relevant traits
+            fn assert_modal<'a, T: ModalSubmit<'a, Error=String>>() {}
+            $(
+                assert_modal::<$x>();
+                if <$x>::modal_submit($cmd, $state, $context).await {
+                    return <$x>::handle_modal_submit($cmd, $state, $context).await
+                }
+            )*
+            Err(CommandResponse::InternalFailure(String::from("Unsupported Modal Submit Command")))
+        }
+    };
+}
+
 pub fn application_command() -> Vec<CreateCommand> {
     let mut base = vec![];
     application_command!(
@@ -200,4 +234,12 @@ pub async fn interaction<'a>(
     context: &'a Context,
 ) -> Result<CommandResponse, CommandResponse> {
     interaction!(command, app_state, context, StandupCommand,)
+}
+
+pub async fn handle_modal<'a>(
+    modal: &'a ModalInteraction,
+    app_state: &'a AppState,
+    context: &'a Context,
+) -> Result<CommandResponse, CommandResponse> {
+    modal!(modal, app_state, context, StandupCommand,)
 }

@@ -6,4 +6,4 @@ mod ping;
 mod say;
 mod standup;
 
-pub use command::{application_command, autocomplete, command, interaction};
+pub use command::{application_command, autocomplete, command, handle_modal, interaction};

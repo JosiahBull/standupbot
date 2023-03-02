@@ -2,7 +2,8 @@ version: "3.3"
 
 services:
   standupbot:
-    image: ghcr.io/josiahbull/standupbot:main
+    # image: ghcr.io/josiahbull/standupbot:main
+    build: .
     container_name: standupbot
     restart: always
     environment:

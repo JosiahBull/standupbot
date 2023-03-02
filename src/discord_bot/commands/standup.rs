@@ -1,10 +1,10 @@
 use log::error;
 use serenity::{
-    all::{CommandInteraction, ComponentInteraction},
+    all::{CommandInteraction, ComponentInteraction, ModalInteraction},
     async_trait,
     builder::{
         CreateActionRow, CreateButton, CreateCommand, CreateInputText, CreateInteractionResponse,
-        CreateInteractionResponseMessage, CreateModal,
+        CreateInteractionResponseMessage, CreateMessage, CreateModal,
     },
     prelude::Context,
 };
@@ -12,7 +12,7 @@ use serenity::{
 use crate::state::AppState;
 
 use super::{
-    command::{Command, InteractionCommand},
+    command::{Command, InteractionCommand, ModalSubmit},
     util::CommandResponse,
 };
 
@@ -46,8 +46,6 @@ impl<'a> Command<'a> for StandupCommand {
         ctx: &'b Context,
     ) -> Result<CommandResponse, CommandResponse> {
         error!("interaction (app cmd): {:?}", interaction);
-        // create a simple message response with a clickable button
-
         Ok(CommandResponse::ComplexSuccess(
             CreateInteractionResponse::Message(
                 CreateInteractionResponseMessage::new()
@@ -66,10 +64,10 @@ impl<'a> Command<'a> for StandupCommand {
 impl InteractionCommand<'_> for StandupCommand {
     async fn answerable<'b>(
         interaction: &'b ComponentInteraction,
-        app_state: &'b AppState,
-        context: &'b Context,
+        _: &'b AppState,
+        _: &'b Context,
     ) -> bool {
-        return true; //TODO
+        interaction.data.custom_id == "standup-start"
     }
 
     async fn interaction<'b>(
@@ -77,10 +75,6 @@ impl InteractionCommand<'_> for StandupCommand {
         app_state: &'b AppState,
         context: &'b Context,
     ) -> Result<CommandResponse, CommandResponse> {
-        // Ok(CommandResponse::ComplexSuccess(
-
-        // ))
-
         interaction
             .create_response(
                 context,
@@ -103,6 +97,42 @@ impl InteractionCommand<'_> for StandupCommand {
             )
             .await
             .unwrap();
+
+        Ok(CommandResponse::NoResponse)
+    }
+}
+
+#[async_trait]
+impl<'a> ModalSubmit<'a> for StandupCommand {
+    async fn modal_submit<'b>(
+        modal: &'b ModalInteraction,
+        app_state: &'b AppState,
+        context: &'b Context,
+    ) -> bool {
+        modal.data.custom_id == "standups"
+    }
+
+    async fn handle_modal_submit<'b>(
+        modal: &'b ModalInteraction,
+        app_state: &'b AppState,
+        context: &'b Context,
+    ) -> Result<CommandResponse, CommandResponse> {
+        // send a simple message in the channel of the interaction WITH the data provided by the user
+        let target_channel = modal.channel_id;
+
+        if let Err(e) = target_channel
+            .send_message(
+                &context,
+                CreateMessage::new().content(format!(
+                    "{}: {:?}",
+                    modal.member.as_ref().unwrap().user.name,
+                    modal.data.components
+                )),
+            )
+            .await
+        {
+            error!("Error sending message: {:?}", e);
+        }
 
         Ok(CommandResponse::NoResponse)
     }

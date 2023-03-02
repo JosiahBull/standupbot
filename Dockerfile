@@ -31,7 +31,6 @@ RUN apt-get clean
 
 COPY --from=builder /app/target/release/tom_bot /app/
 COPY --from=builder /app/assets/* /app/assets/
-COPY --from=builder /app/scripts/* /app/scripts/
 
 HEALTHCHECK --interval=1m --timeout=3s --retries=3 --start-period=20s CMD curl -f http://localhost:3000/healthcheck || exit 1
 

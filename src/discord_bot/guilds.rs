@@ -23,7 +23,7 @@ use tokio::{
 use super::manager::{DiscordEvent, InternalSender};
 use crate::{
     discord_bot::commands::{
-        application_command, autocomplete, command, interaction as handle_interaction,
+        application_command, autocomplete, command, handle_modal, interaction as handle_interaction,
     },
     state::AppState,
 };
@@ -80,7 +80,10 @@ async fn handle_slash_command(interaction: Interaction, context: Context, app_st
             }
         }
         Interaction::Modal(submit) => {
-            error!("Received modal submit: {:?}", submit);
+            trace!("Received modal submit: {:?}", submit);
+            if let Err(e) = handle_modal(&submit, &app_state, &context).await {
+                error!("Unable to handle modal submit: {:?}", e);
+            }
         }
         // ping commands should not get here
         _ => unreachable!(),
