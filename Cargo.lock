@@ -1250,6 +1250,21 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6e63cff320ae2c57904679ba7cb63280a3dc4613885beafb148ee7bf9aa9042d"
 
 [[package]]
+name = "standup_bot"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "fern",
+ "log",
+ "rand 0.8.5",
+ "serde",
+ "serde_json",
+ "serenity",
+ "tokio",
+ "warp",
+]
+
+[[package]]
 name = "static_assertions"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1447,21 +1462,6 @@ dependencies = [
  "pin-project-lite",
  "tokio",
  "tracing",
-]
-
-[[package]]
-name = "tom_bot"
-version = "0.1.0"
-dependencies = [
- "chrono",
- "fern",
- "log",
- "rand 0.8.5",
- "serde",
- "serde_json",
- "serenity",
- "tokio",
- "warp",
 ]
 
 [[package]]

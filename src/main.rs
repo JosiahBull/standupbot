@@ -85,7 +85,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     }
 
-    info!("global TomBot shutdown");
+    info!("global Standup Bot shutdown");
 
     Ok(())
 }

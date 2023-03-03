@@ -14,9 +14,7 @@ jobs:
       matrix:
         include:
           - context: .
-            image: tombot
-          - context: gecko
-            image: tombot-gecko-driver
+            image: standupbot
     permissions:
       contents: read
       packages: write

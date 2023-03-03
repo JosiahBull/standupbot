@@ -1,5 +1,5 @@
 [package]
-name = "tom_bot"
+name = "standup_bot"
 version = "0.1.0"
 edition = "2021"
 authors = ["Josiah Bull <josiah.bull7@gmail.com>"]
