@@ -135,24 +135,24 @@ macro_rules! command {
 }
 
 /// match against a list of provided autocomplete command types, and produce a response which can be sent to the user
-macro_rules! autocomplete {
-    ( $cmd:expr, $state:expr, $context:expr, $( $x:ty ),* $(,)? ) => {
-        {
-            /// ensures that the provided type has relevant traits
-            fn assert_autocomplete<'a, T: AutocompleteCommand<'a, Error=String>>() {}
-            $(
-                assert_autocomplete::<$x>();
-                if ($cmd).data.name == <$x>::name() {
-                    return match $cmd.data.autocomplete() {
-                        Some(data) => <$x>::autocomplete($cmd, &data, $state, $context).await,
-                        None => Err(CommandResponse::InternalFailure(String::from("No Autocomplete Data Provided")))
-                    }
-                }
-            )*
-            Err(CommandResponse::InternalFailure(String::from("Unsupported Autocomplete Command")))
-        }
-    };
-}
+// macro_rules! autocomplete {
+//     ( $cmd:expr, $state:expr, $context:expr, $( $x:ty ),* $(,)? ) => {
+//         {
+//             /// ensures that the provided type has relevant traits
+//             fn assert_autocomplete<'a, T: AutocompleteCommand<'a, Error=String>>() {}
+//             $(
+//                 assert_autocomplete::<$x>();
+//                 if ($cmd).data.name == <$x>::name() {
+//                     return match $cmd.data.autocomplete() {
+//                         Some(data) => <$x>::autocomplete($cmd, &data, $state, $context).await,
+//                         None => Err(CommandResponse::InternalFailure(String::from("No Autocomplete Data Provided")))
+//                     }
+//                 }
+//             )*
+//             Err(CommandResponse::InternalFailure(String::from("Unsupported Autocomplete Command")))
+//         }
+//     };
+// }
 
 /// match against a list of provided interaction command types, and produce a response which can be sent to the user
 macro_rules! interaction {

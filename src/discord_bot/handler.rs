@@ -149,7 +149,7 @@ impl EventHandler for Handler {
                             .await
                             .unwrap(),
                     )
-                    .username("The NPC"),
+                    .username("Standup Bot"),
             )
             .await
             .unwrap_or_else(|_| error!("unable to set profile picture"));

@@ -1,10 +1,10 @@
 use log::error;
 use serenity::{
-    all::{CommandInteraction, ComponentInteraction, ModalInteraction},
+    all::{ActionRowComponent, CommandInteraction, ComponentInteraction, ModalInteraction},
     async_trait,
     builder::{
         CreateActionRow, CreateButton, CreateCommand, CreateInputText, CreateInteractionResponse,
-        CreateInteractionResponseMessage, CreateMessage, CreateModal,
+        CreateInteractionResponseMessage, CreateModal,
     },
     prelude::Context,
 };
@@ -15,6 +15,14 @@ use super::{
     command::{Command, InteractionCommand, ModalSubmit},
     util::CommandResponse,
 };
+
+static QUESTION_LIST: &[&str] = &[
+    "What did you work on last week?",
+    "What are you working on this week?",
+    "When are you aiming to finish?",
+    "Is there anything blocking you?",
+    "is there anything you need help with?",
+];
 
 pub struct StandupCommand;
 
@@ -41,11 +49,10 @@ impl<'a> Command<'a> for StandupCommand {
 
     async fn handle_application_command<'b>(
         self,
-        interaction: &'b CommandInteraction,
-        state: &'b AppState,
-        ctx: &'b Context,
+        _: &'b CommandInteraction,
+        _: &'b AppState,
+        _: &'b Context,
     ) -> Result<CommandResponse, CommandResponse> {
-        error!("interaction (app cmd): {:?}", interaction);
         Ok(CommandResponse::ComplexSuccess(
             CreateInteractionResponse::Message(
                 CreateInteractionResponseMessage::new()
@@ -72,26 +79,25 @@ impl InteractionCommand<'_> for StandupCommand {
 
     async fn interaction<'b>(
         interaction: &'b ComponentInteraction,
-        app_state: &'b AppState,
+        _: &'b AppState,
         context: &'b Context,
     ) -> Result<CommandResponse, CommandResponse> {
         interaction
             .create_response(
                 context,
                 CreateInteractionResponse::Modal(
-                    CreateModal::new("hellothere", "standups").components({
-                        vec![
-                            CreateActionRow::InputText(CreateInputText::new(
-                                serenity::all::InputTextStyle::Short,
-                                "What did you do this week?",
-                                "standup-weekly-task",
-                            )),
-                            CreateActionRow::InputText(CreateInputText::new(
-                                serenity::all::InputTextStyle::Short,
-                                "What are you going to do next week?",
-                                "standup-next-week-task",
-                            )),
-                        ]
+                    CreateModal::new("standups", "Standups").components({
+                        QUESTION_LIST
+                            .iter()
+                            .enumerate()
+                            .map(|(i, question)| {
+                                CreateActionRow::InputText(CreateInputText::new(
+                                    serenity::all::InputTextStyle::Short,
+                                    *question,
+                                    format!("standup-question-{}", i),
+                                ))
+                            })
+                            .collect()
                     }),
                 ),
             )
@@ -106,32 +112,63 @@ impl InteractionCommand<'_> for StandupCommand {
 impl<'a> ModalSubmit<'a> for StandupCommand {
     async fn modal_submit<'b>(
         modal: &'b ModalInteraction,
-        app_state: &'b AppState,
-        context: &'b Context,
+        _: &'b AppState,
+        _: &'b Context,
     ) -> bool {
         modal.data.custom_id == "standups"
     }
 
     async fn handle_modal_submit<'b>(
         modal: &'b ModalInteraction,
-        app_state: &'b AppState,
+        _: &'b AppState,
         context: &'b Context,
     ) -> Result<CommandResponse, CommandResponse> {
         // send a simple message in the channel of the interaction WITH the data provided by the user
-        let target_channel = modal.channel_id;
+        let username = &modal.user.name;
 
-        if let Err(e) = target_channel
-            .send_message(
+        let mut result_strings = vec![];
+
+        for (i, question) in QUESTION_LIST.iter().enumerate() {
+            let answer = {
+                match &modal.data.components[i].components[0] {
+                    ActionRowComponent::InputText(input) => input,
+                    _ => panic!("Unexpected component type"),
+                }
+            };
+
+            result_strings.push(format!("**{}**\r{}", question, answer.value));
+        }
+
+        // if the total length of all result strings is >=1900 chars, throw an error
+        let char_count = result_strings.iter().map(|s| s.len()).sum::<usize>();
+
+        if char_count >= 1900 {
+            if let Err(e) = modal.create_response(&context,
+                CreateInteractionResponse::Message(
+                    CreateInteractionResponseMessage::new().content("Your standup is too long, please shorten it")
+                    .ephemeral(true)
+                )
+
+            ).await {
+                error!("Error sending standup response: {}", e);
+                return Ok(CommandResponse::NoResponse)
+            }
+        }
+
+        if let Err(e) = modal
+            .create_response(
                 &context,
-                CreateMessage::new().content(format!(
-                    "{}: {:?}",
-                    modal.member.as_ref().unwrap().user.name,
-                    modal.data.components
-                )),
+                CreateInteractionResponse::Message(
+                    CreateInteractionResponseMessage::new().content(format!(
+                        "**Standup Submission by {}:**\r{}",
+                        username,
+                        result_strings.join("\r")
+                    )),
+                ),
             )
             .await
         {
-            error!("Error sending message: {:?}", e);
+            error!("Error sending standup response: {}", e);
         }
 
         Ok(CommandResponse::NoResponse)
