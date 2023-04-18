@@ -15,7 +15,7 @@ use crate::{
 
 use super::util::CommandResponse;
 
-const DEFAULT_PERMISSIONS: Permissions = Permissions::ADMINISTRATOR;
+const DEFAULT_PERMISSIONS: Permissions = Permissions::SEND_MESSAGES;
 
 /// A command that can be used in a guild, restricted to administrators
 #[async_trait]
