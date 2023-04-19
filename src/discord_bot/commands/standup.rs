@@ -40,7 +40,7 @@ impl<'a> Command<'a> for StandupCommand {
     }
 
     fn description() -> &'static str {
-        "Run the weekly standups early, they will also be triggered Wednesday's at 3pm"
+        "Run the weekly standups"
     }
 
     fn get_application_command_options(i: CreateCommand) -> CreateCommand {
